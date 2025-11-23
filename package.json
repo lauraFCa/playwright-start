@@ -1,0 +1,23 @@
+{
+  "name": "playwright-start",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lauraFCa/playwright-start.git"
+  },
+  "keywords": [],
+  "author": "Laura C",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lauraFCa/playwright-start/issues"
+  },
+  "homepage": "https://github.com/lauraFCa/playwright-start#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.1"
+  }
+}
