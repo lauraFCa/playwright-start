@@ -24,6 +24,7 @@ jobs:
       run: npx playwright test
 
     - name: List files
+      if: always()
       run: ls
 
     - name: Create GitHub summary for Playwright results
