@@ -1,3 +1,5 @@
+[![Playwright Tests](https://github.com/lauraFCa/playwright-start/actions/workflows/playwright.yml/badge.svg)](https://github.com/lauraFCa/playwright-start/actions/workflows/playwright.yml)
+
 **Visão Geral**
 - **Projeto:** Playwright start — um repositório de exemplo para testes E2E com Playwright.
 - **Objetivo:** Fornecer um ponto de partida rápido para escrever e executar testes usando Playwright em TypeScript.
@@ -60,17 +62,7 @@ npx playwright test --headed
 
 - **Gravar um vídeo por falha:** Configure no `playwright.config.ts` ou use `--timeout`/`--retries` conforme necessário.
 
-**Contribuindo**
-- **Adicionar testes:** Crie novos arquivos dentro de `tests/` com extensão `.spec.ts`.
-- **Padrões:** Siga o padrão existente em `tests/example.spec.ts` para estrutura e boas práticas.
-- **Pull requests:** Abra PRs pequenos e documente o objetivo do teste.
 
 **Solução de problemas**
 - **Testes não iniciam:** Verifique se os browsers foram instalados (`npx playwright install`) e se as dependências estão atualizadas.
 - **Permissões/Antivírus:** Em alguns ambientes Windows, antivírus/Firewall podem bloquear o navegador automático.
-
-**Licença**
-- **Licença:** Verifique o arquivo `LICENSE` no repositório ou adicione uma licença apropriada se ainda não existir.
-
-**Contato**
-- **Manutenção:** Para dúvidas ou problemas, abra uma issue no repositório.
