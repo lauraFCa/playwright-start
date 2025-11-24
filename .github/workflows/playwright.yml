@@ -26,6 +26,7 @@ jobs:
     - name: List files
       if: always()
       run: ls
+      working-directory: playwright-report
 
     - name: Create GitHub summary for Playwright results
       if: always()
