@@ -35,8 +35,11 @@ jobs:
         if [ -f playwright-report/report.json ]; then
           node -e "const fs=require('fs');const p='playwright-report/report.json';const t=fs.readFileSync(p,'utf8');const data=JSON.parse(t);const counts={passed:0,failed:0,skipped:0,flaky:0,timedOut:0};(function walk(o){if(!o||typeof o!=='object')return; for(const k in o){const v=o[k]; if(k==='status'&&typeof v==='string'){const s=v.toLowerCase();counts[s]=(counts[s]||0)+1;} walk(v);} })(data); console.log('Summary: '+JSON.stringify(counts));" >> $GITHUB_STEP_SUMMARY
           node -e "const fs=require('fs');const p='playwright-report/report.json';const data=JSON.parse(fs.readFileSync(p,'utf8')); function list(o){ if(!o||typeof o!=='object') return; if(o.title && o.status) console.log('- '+o.title+': '+o.status); for(const k in o) list(o[k]); } list(data);" >> $GITHUB_STEP_SUMMARY
+        elif [ -f playwright-report/index.html ]; then
+          node -e "const fs=require('fs');const p='playwright-report/index.html';const html=fs.readFileSync(p,'utf8');const patterns={passed:/\\bPassed\\b/gi,failed:/\\bFailed\\b/gi,skipped:/\\bSkipped\\b/gi,flaky:/\\bFlaky\\b/gi,timedOut:/\\bTimed out\\b/gi};const counts={};for(const k in patterns){const m=html.match(patterns[k]);counts[k]=m?m.length:0;} console.log('Summary: '+JSON.stringify(counts));" >> $GITHUB_STEP_SUMMARY
+          node -e "const fs=require('fs');const p='playwright-report/index.html';const html=fs.readFileSync(p,'utf8');const lines=html.split(/\\r?\\n/).filter(l=>/Passed|Failed|Skipped|Flaky|Timed out/i.test(l)).slice(0,200); lines.forEach(l=>console.log(l.replace(/</g,'&lt;')));" >> $GITHUB_STEP_SUMMARY
         else
-          echo 'No Playwright report found at playwright-report/report.json' >> $GITHUB_STEP_SUMMARY
+          echo 'No Playwright report found at playwright-report/report.json or playwright-report/index.html' >> $GITHUB_STEP_SUMMARY
           echo 'Last 200 lines of workflow log (if available):' >> $GITHUB_STEP_SUMMARY
           tail -n 200 playwright-output.txt >> $GITHUB_STEP_SUMMARY || true
         fi
