@@ -20,8 +20,11 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
-    - name: Run Playwright tests
-      run: npx playwright test
+    - name: Run Playwright tests (xvfb for headed browsers)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        xvfb-run -a npx playwright test
 
     - name: List files
       if: always()
@@ -33,15 +36,43 @@ jobs:
       run: |
         echo "## Playwright Test Results" >> $GITHUB_STEP_SUMMARY
         if [ -f playwright-report/report.json ]; then
-          node -e "const fs=require('fs');const p='playwright-report/report.json';const t=fs.readFileSync(p,'utf8');const data=JSON.parse(t);const counts={passed:0,failed:0,skipped:0,flaky:0,timedOut:0};(function walk(o){if(!o||typeof o!=='object')return; for(const k in o){const v=o[k]; if(k==='status'&&typeof v==='string'){const s=v.toLowerCase();counts[s]=(counts[s]||0)+1;} walk(v);} })(data); console.log('Summary: '+JSON.stringify(counts));" >> $GITHUB_STEP_SUMMARY
-          node -e "const fs=require('fs');const p='playwright-report/report.json';const data=JSON.parse(fs.readFileSync(p,'utf8')); function list(o){ if(!o||typeof o!=='object') return; if(o.title && o.status) console.log('- '+o.title+': '+o.status); for(const k in o) list(o[k]); } list(data);" >> $GITHUB_STEP_SUMMARY
-        elif [ -f playwright-report/index.html ]; then
-          node -e "const fs=require('fs');const p='playwright-report/index.html';const html=fs.readFileSync(p,'utf8');const patterns={passed:/\\bPassed\\b/gi,failed:/\\bFailed\\b/gi,skipped:/\\bSkipped\\b/gi,flaky:/\\bFlaky\\b/gi,timedOut:/\\bTimed out\\b/gi};const counts={};for(const k in patterns){const m=html.match(patterns[k]);counts[k]=m?m.length:0;} console.log('Summary: '+JSON.stringify(counts));" >> $GITHUB_STEP_SUMMARY
-          node -e "const fs=require('fs');const p='playwright-report/index.html';const html=fs.readFileSync(p,'utf8');const lines=html.split(/\\r?\\n/).filter(l=>/Passed|Failed|Skipped|Flaky|Timed out/i.test(l)).slice(0,200); lines.forEach(l=>console.log(l.replace(/</g,'&lt;')));" >> $GITHUB_STEP_SUMMARY
+          cat > /tmp/playwright-summary.js <<'NODE'
+        const fs = require('fs');
+        const p = 'playwright-report/report.json';
+        try {
+          const data = JSON.parse(fs.readFileSync(p,'utf8'));
+          const rows = [];
+          (data.suites || []).forEach(suite => {
+            (suite.specs || []).forEach(spec => {
+              const specName = spec.file || spec.title || '';
+              (spec.tests || []).forEach(test => {
+                const testTitle = test.title || specName;
+                (test.results || []).forEach(res => {
+                  const platform = res.projectName || res.projectId || test.projectName || test.projectId || '';
+                  const status = res.status || '';
+                  const retries = (typeof res.retry === 'number') ? res.retry : 0;
+                  let cause = '-';
+                  if (res.errors && res.errors.length) {
+                    cause = res.errors.map(e => (typeof e === 'string' ? e : (e.message || JSON.stringify(e)))).join(' | ');
+                  }
+                  cause = String(cause).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+                  rows.push({ test: testTitle, platform, status, retries, cause });
+                });
+              });
+            });
+          });
+
+          console.log('Teste | Plataforma | Status | Retries | Causa da falha');
+          console.log('--- | --- | -- | -- | -- |');
+          rows.forEach(r => console.log(`${r.test} | ${r.platform} | ${r.status} | ${r.retries} | ${r.cause}`));
+        } catch (e) {
+          console.error('Failed to parse report.json:', e && e.message ? e.message : e);
+          process.exitCode = 1;
+        }
+        NODE
+          node /tmp/playwright-summary.js >> $GITHUB_STEP_SUMMARY || true
         else
-          echo 'No Playwright report found at playwright-report/report.json or playwright-report/index.html' >> $GITHUB_STEP_SUMMARY
-          echo 'Last 200 lines of workflow log (if available):' >> $GITHUB_STEP_SUMMARY
-          tail -n 200 playwright-output.txt >> $GITHUB_STEP_SUMMARY || true
+          echo 'playwright-report/report.json not found' >> $GITHUB_STEP_SUMMARY
         fi
       continue-on-error: true
 
